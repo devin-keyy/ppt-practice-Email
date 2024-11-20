@@ -1,13 +1,27 @@
 package email;
 
+import java.util.*;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * A datatype that represents a mailbox or collection of email.
  */
 public class MailBox {
     // TODO Implement this datatype
+    private Map<UUID, Email> mailbox;
+    private Set<UUID> unread;
+    private Set<UUID> read;
+
+    public MailBox() {
+        this.mailbox = new HashMap<>();
+        this.unread = new HashSet<>();
+        this.read = new HashSet<>();
+    }
+
+
+    // ===== ** Task 1 ** ==== //
 
     /**
      * Add a new message to the mailbox
@@ -18,8 +32,13 @@ public class MailBox {
      * or msg was null)
      */
     public boolean addMsg(Email msg) {
-        // TODO: Implement this method
-        return false;
+        if(mailbox.containsValue(msg)) {
+            return false;
+        }
+        mailbox.put(msg.getId(), msg);
+        unread.add(msg.getId());
+
+        return true;
     }
 
 
@@ -30,8 +49,10 @@ public class MailBox {
      * and null if such an email does not exist in this mailbox
      */
     public Email getMsg(UUID msgID) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException(); // You should change this!
+        if(!mailbox.containsKey(msgID)) {
+            return null;
+        }
+        return mailbox.get(msgID);
     }
 
     /**
@@ -42,8 +63,12 @@ public class MailBox {
      * else return false
      */
     public boolean delMsg(UUID msgId) {
-        // TODO: Implement this method
-        return false;
+        if (!mailbox.containsKey(msgId)) { return false; }
+
+        mailbox.remove(msgId);
+        unread.remove(msgId);
+        read.remove(msgId);
+        return true;
     }
 
     /**
@@ -52,8 +77,7 @@ public class MailBox {
      * @return the number of messages in the mailbox
      */
     public int getMsgCount() {
-        // TODO: Implement this method
-        return -1;
+        return mailbox.size();
     }
 
     /**
@@ -63,8 +87,12 @@ public class MailBox {
      * @return true if the message exists in the mailbox and false otherwise
      */
     public boolean markRead(UUID msgID) {
-        // TODO: Implement this method
-        return false;
+        if (!mailbox.containsKey(msgID)|| read.contains(msgID) || !unread.contains(msgID)) {return false; }
+
+        read.add(msgID);
+        unread.remove(msgID);
+
+        return true;
     }
 
     /**
@@ -74,8 +102,12 @@ public class MailBox {
      * @return true if the message exists in the mailbox and false otherwise
      */
     public boolean markUnread(UUID msgID) {
-        // TODO: Implement this method
-        return false;
+        if (!mailbox.containsKey(msgID)|| !read.contains(msgID) || unread.contains(msgID)) { return false; }
+
+        unread.add(msgID);
+        read.remove(msgID);
+
+        return true;
     }
 
     /**
@@ -86,8 +118,10 @@ public class MailBox {
      * @throws IllegalArgumentException if the message does not exist in the mailbox
      */
     public boolean isRead(UUID msgID) {
-        // TODO: Implement this method
-        return false;
+        if (!mailbox.containsKey(msgID)) { throw new IllegalArgumentException("Invalid message"); }
+
+
+        return read.contains(msgID);
     }
 
     /**
@@ -95,9 +129,12 @@ public class MailBox {
      * @return the number of unread messages in this mailbox
      */
     public int getUnreadMsgCount() {
-        // TODO: Implement this method
-        return -1;
+        return unread.size();
     }
+
+
+    // ===== ** Task 2 ** ==== //
+
 
     /**
      * Obtain a list of messages in the mailbox, sorted by timestamp,
@@ -108,8 +145,16 @@ public class MailBox {
      * the same timestamp, the ordering among those messages is arbitrary.
      */
     public List<Email> getTimestampView() {
-        // TODO: Implement this method
-        return null;
+
+        // .values() extracts a Collection<Email> from the Map
+        // .stream() creates a stream from the collection of Email objects.
+        // sorted(sorted(Comparator.comparingLong(Email::getTimestamp)) sorts the stream of emails based on their timestamp.
+        // Email::getTimestamp is a method reference to the getter for the timestamp field.
+        // collect(Collectors.toList()) changes the sorted stream to a List<Email>
+        return mailbox.values()
+                .stream()
+                .sorted(Comparator.comparing(Email::getTimestamp).reversed())
+                .collect(Collectors.toList());
     }
 
     /**
@@ -124,8 +169,11 @@ public class MailBox {
      * sorted with the earliest message first and breaking ties arbitrarily
      */
     public List<Email> getMsgsInRange(int startTime, int endTime) {
-        // TODO: Implement this method
-        return null;
+        return mailbox.values()
+                .stream()
+                .filter(e -> e.getTimestamp() >= startTime && e.getTimestamp() <= endTime)
+                .sorted(Comparator.comparing(Email::getTimestamp).reversed())
+                .collect(Collectors.toList());
     }
 
 
